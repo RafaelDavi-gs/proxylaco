@@ -28,23 +28,31 @@ export default {
       // Se não tiver path e baseUrl, mas tiver ?checkIP, retornar IP de saída
       if (!path && !baseUrl && url.searchParams.get('checkIP') === 'true') {
         try {
-          const ipResponse = await fetch('https://api.ipify.org?format=json');
-          const ipData = await ipResponse.json();
+          // Obter IP IPv4
+          const ipv4Response = await fetch('https://api.ipify.org?format=json');
+          const ipv4Data = await ipv4Response.json();
+          
+          // Obter IP IPv6
+          const ipv6Response = await fetch('https://api64.ipify.org?format=json');
+          const ipv6Data = await ipv6Response.json();
           
           return new Response(
             JSON.stringify({
               success: true,
-              message: 'IP de saída do Cloudflare Worker',
-              ip: ipData.ip,
+              message: 'IPs de saída do Cloudflare Worker',
+              ipv4: ipv4Data.ip,
+              ipv6: ipv6Data.ip,
               instructions: [
-                '1. Copie o IP acima',
-                '2. Acesse o painel do Asaas (sandbox ou production)',
-                '3. Vá em Integrações > API > Whitelist de IPs',
-                '4. Adicione este IP na whitelist',
-                '5. Salve as alterações',
-                '6. Teste novamente o proxy'
+                '1. Copie o IP IPv4 acima (recomendado)',
+                '2. Se o Asaas não suportar IPv6, use apenas o IPv4',
+                '3. Acesse o painel do Asaas (sandbox ou production)',
+                '4. Vá em Integrações > API > Whitelist de IPs',
+                '5. Adicione o IP IPv4 na whitelist',
+                '6. Se o Asaas suportar IPv6, adicione também o IPv6',
+                '7. Salve as alterações',
+                '8. Teste novamente o proxy'
               ],
-              note: 'Este é o IP que o Asaas verá quando o Worker fizer requisições'
+              note: 'Estes são os IPs que o Asaas verá quando o Worker fizer requisições. Use IPv4 se o Asaas não suportar IPv6.'
             }),
             {
               headers: {
