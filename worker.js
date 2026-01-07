@@ -24,13 +24,60 @@ export default {
       const url = new URL(request.url);
       const path = url.searchParams.get('path');
       const baseUrl = url.searchParams.get('baseUrl');
+      
+      // Se não tiver path e baseUrl, mas tiver ?checkIP, retornar IP de saída
+      if (!path && !baseUrl && url.searchParams.get('checkIP') === 'true') {
+        try {
+          const ipResponse = await fetch('https://api.ipify.org?format=json');
+          const ipData = await ipResponse.json();
+          
+          return new Response(
+            JSON.stringify({
+              success: true,
+              message: 'IP de saída do Cloudflare Worker',
+              ip: ipData.ip,
+              instructions: [
+                '1. Copie o IP acima',
+                '2. Acesse o painel do Asaas (sandbox ou production)',
+                '3. Vá em Integrações > API > Whitelist de IPs',
+                '4. Adicione este IP na whitelist',
+                '5. Salve as alterações',
+                '6. Teste novamente o proxy'
+              ],
+              note: 'Este é o IP que o Asaas verá quando o Worker fizer requisições'
+            }),
+            {
+              headers: {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*',
+              }
+            }
+          );
+        } catch (error) {
+          return new Response(
+            JSON.stringify({
+              success: false,
+              error: 'Erro ao descobrir IP',
+              details: error.message
+            }),
+            {
+              status: 500,
+              headers: {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*',
+              }
+            }
+          );
+        }
+      }
 
       if (!path || !baseUrl) {
         return new Response(
           JSON.stringify({ 
             error: 'Parâmetros obrigatórios não fornecidos',
             required: ['path', 'baseUrl'],
-            received: { path, baseUrl }
+            received: { path, baseUrl },
+            tip: 'Use ?checkIP=true para descobrir o IP de saída do Cloudflare'
           }),
           { 
             status: 400,
